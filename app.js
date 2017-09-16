@@ -123,7 +123,7 @@ var app = new Vue({
                 });
                 _.each(rerollComboGroups, function(rerollComboGroup, rerollCombo) {
                     rerollComboGroup.rerollCombo = rerollCombo.substring(1);
-                    rerollComboGroup.rating = ((rerollComboGroup.above + (rerollComboGroup.equal/2)) / rerollComboGroup.total) * 100;
+                    rerollComboGroup.rating = (rerollComboGroup.above / rerollComboGroup.total) * 100;
                     rerollComboGroupsArr.push(rerollComboGroup);
                 });
                 rerollComboGroupsArr = _.sortBy(rerollComboGroupsArr, ['rating']).reverse();

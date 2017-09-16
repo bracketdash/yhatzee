@@ -159,7 +159,7 @@ var app = new Vue({
             if (this.rollsLeft) {
                 this.weightedRerollComboRating = rerollComboGroupsArr[0].rating.toFixed(1);
             } else {
-                this.weightedRerollComboRating = 'N/A';
+                this.weightedRerollComboRating = '0';
             }
             this.showResults = true;
             this.noResultsMsg = 'Ready...';

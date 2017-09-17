@@ -76,7 +76,8 @@ var app = new Vue({
         weightedRerollComboRating: '0.0',
         recommendReroll: false,
         recommendedRerollCombo: '',
-        recommendedComboId: 1
+        recommendedComboId: 1,
+        rerollsSimulated: 0
     },
     computed: {
         diceArr: function() {
@@ -93,6 +94,7 @@ var app = new Vue({
             var highestCurrentPoints;
             var rerollComboGroups = {};
             var rerollComboGroupsArr = [];
+            var rerollCombosCompleted = 0;
             if (this.dice.length !== 5 || _.intersection(this.diceArr, [7, 8, 9, 0]).length) {
                 this.noResultsMsg = 'Invalid dice! Example: 36552';
                 return;
@@ -100,18 +102,34 @@ var app = new Vue({
             this.availablePointCombos = this.getPointCombos(this.diceArr);
             highestCurrentPoints = this.availablePointCombos[0].points;
             if (this.rollsLeft) {
+                this.showResults = false;
+                this.noResultsMsg = 'Simulating re-rolls and comparing scores...';
                 rerollCombos = ['1', '2', '3', '4', '5', '12', '13', '14', '15', '23', '24', '25', '34', '35','45', '123', '124', '125', '134', '135', '145', '234', '235', '245', '345', '1234', '1235', '1245', '1345', '2345', '12345'];
                 _.each(rerollCombos, function(rerollCombo) {
-                    potentialRerolls = potentialRerolls.concat(self.getPotentialRerolls(_.map(rerollCombo.split(''), function(val) {
+                    self.getPotentialRerolls(_.map(rerollCombo.split(''), function(val) {
                         return parseInt(val, 10) - 1;
-                    }), _.clone(self.diceArr), []));
+                    }), _.clone(self.diceArr), [], [], function(newPotentialsRerolls) {
+                        potentialRerolls = potentialRerolls.concat(newPotentialsRerolls);
+                        rerollCombosCompleted += 1;
+                        if (rerollCombosCompleted === 31) {
+                            continueMakingRecommendation();
+                        }
+                    });
                 });
+            } else {
+                finishMakingRecommendation();
+            }
+
+            function continueMakingRecommendation() {
+                self.rerollsSimulated = 0;
                 _.each(potentialRerolls, function(potentialReroll) {
                     if (!rerollComboGroups['r' + potentialReroll.rerollCombo]) {
                         rerollComboGroups['r' + potentialReroll.rerollCombo] = {
                             above: 0,
                             equal: 0,
-                            total: 0
+                            rolls: [],
+                            total: 0,
+                            totalPoints: 0
                         };
                     }
                     if (potentialReroll.highestPoints > highestCurrentPoints) {
@@ -119,50 +137,60 @@ var app = new Vue({
                     } else if (potentialReroll.highestPoints === highestCurrentPoints) {
                         rerollComboGroups['r' + potentialReroll.rerollCombo].equal += 1;
                     }
+                    rerollComboGroups['r' + potentialReroll.rerollCombo].totalPoints += potentialReroll.highestPoints;
+                    rerollComboGroups['r' + potentialReroll.rerollCombo].rolls.push(potentialReroll);
                     rerollComboGroups['r' + potentialReroll.rerollCombo].total += 1;
                 });
                 _.each(rerollComboGroups, function(rerollComboGroup, rerollCombo) {
                     rerollComboGroup.rerollCombo = rerollCombo.substring(1);
-                    rerollComboGroup.rating = ((rerollComboGroup.above + rerollComboGroup.equal) / rerollComboGroup.total) * 100;
+                    rerollComboGroup.rating = (rerollComboGroup.above / (rerollComboGroup.total - rerollComboGroup.equal)) * 100;
+                    if (_.isNaN(rerollComboGroup.rating)) {
+                        rerollComboGroup.rating = 0;
+                    }
+                    rerollComboGroup.average = rerollComboGroup.totalPoints / rerollComboGroup.total;
                     rerollComboGroupsArr.push(rerollComboGroup);
                 });
-                rerollComboGroupsArr = _.sortBy(rerollComboGroupsArr, ['rating']).reverse();
+                rerollComboGroupsArr = _.sortBy(rerollComboGroupsArr, ['rating', 'average']).reverse();
+                finishMakingRecommendation();
             }
-            if (rerollComboGroupsArr.length && rerollComboGroupsArr[0].rating > 50) {
-                this.recommendation = 'Re-roll ';
-                if (rerollComboGroupsArr[0].rerollCombo.length === 5) {
-                    this.recommendation += 'EVERYTHING';
-                } else {
-                    this.recommendation += 'the ';
-                    _.each(rerollComboGroupsArr[0].rerollCombo.split(''), function(rerollDie, rerollIndex) {
-                        if (rerollIndex) {
-                            if (rerollIndex === rerollComboGroupsArr[0].rerollCombo.length - 1) {
-                                if (rerollComboGroupsArr[0].rerollCombo.length > 2) {
-                                    self.recommendation += ',';
+
+            function finishMakingRecommendation() {
+                if (rerollComboGroupsArr.length && rerollComboGroupsArr[0].rating > 50) {
+                    self.recommendation = 'Re-roll ';
+                    if (rerollComboGroupsArr[0].rerollCombo.length === 5) {
+                        self.recommendation += 'EVERYTHING';
+                    } else {
+                        self.recommendation += 'the ';
+                        _.each(rerollComboGroupsArr[0].rerollCombo.split(''), function(rerollDie, rerollIndex) {
+                            if (rerollIndex) {
+                                if (rerollIndex === rerollComboGroupsArr[0].rerollCombo.length - 1) {
+                                    if (rerollComboGroupsArr[0].rerollCombo.length > 2) {
+                                        self.recommendation += ',';
+                                    }
+                                    self.recommendation += ' and ';
+                                } else {
+                                    self.recommendation += ', ';
                                 }
-                                self.recommendation += ' and ';
-                            } else {
-                                self.recommendation += ', ';
                             }
-                        }
-                        self.recommendation += self.diceArr[parseInt(rerollDie, 10)];
-                    });
+                            self.recommendation += self.diceArr[parseInt(rerollDie, 10)];
+                        });
+                    }
+                    self.recommendation += '.';
+                    self.recommendReroll = true;
+                    self.recommendedRerollCombo = rerollComboGroupsArr[0].rerollCombo;
+                } else {
+                    self.recommendation = self.availablePointCombos[0].name + ' for ' + highestCurrentPoints + ' points.';
+                    self.recommendReroll = false;
+                    self.recommendedComboId = self.availablePointCombos[0].id;
                 }
-                this.recommendation += '.';
-                this.recommendReroll = true;
-                this.recommendedRerollCombo = rerollComboGroupsArr[0].rerollCombo;
-            } else {
-                this.recommendation = this.availablePointCombos[0].name + ' for ' + highestCurrentPoints + ' points.';
-                this.recommendReroll = false;
-                this.recommendedComboId = this.availablePointCombos[0].id;
+                if (self.rollsLeft) {
+                    self.weightedRerollComboRating = rerollComboGroupsArr[0].rating.toFixed(1);
+                } else {
+                    self.weightedRerollComboRating = '0';
+                }
+                self.showResults = true;
+                self.noResultsMsg = 'Ready...';
             }
-            if (this.rollsLeft) {
-                this.weightedRerollComboRating = rerollComboGroupsArr[0].rating.toFixed(1);
-            } else {
-                this.weightedRerollComboRating = '0';
-            }
-            this.showResults = true;
-            this.noResultsMsg = 'Ready...';
         },
         newRoll: function() {
             var newDice = '';
@@ -198,7 +226,6 @@ var app = new Vue({
                         index: rerollIndex
                     });
                     newDiceArr[rerollIndex] = _.random(1, 6);
-                    console.log('newDiceArr[' + rerollIndex + '] = ' + newDiceArr[rerollIndex]);
                 });
                 this.dice = newDiceArr.join('');
                 this.makeRecommendation();
@@ -207,11 +234,16 @@ var app = new Vue({
                 this.showResults = false;
             }
         },
-        getPotentialRerolls: function(rerollComboArr, rerollDiceArr, potentialRerolls) {
+        getPotentialRerolls: function(rerollComboArr, rerollDiceArr, potentialRerolls, sortedPotentialRerolls, returnFn) {
             var maxLengthMap = [5, 20, 55, 125, 251];
             var carryOver = false;
-            if (potentialRerolls.length === maxLengthMap[rerollComboArr.length-1]) {
-                return potentialRerolls;
+            var highestPoints;
+            var self = this;
+            var sortedRerollDice;
+            var sortedPotentialRerolls;
+            if (sortedPotentialRerolls.length === maxLengthMap[rerollComboArr.length-1]) {
+                returnFn(potentialRerolls);
+                return;
             }
             _.each(rerollComboArr, function(rerollDie, rerollIndex) {
                 if (rerollIndex && !carryOver) {
@@ -225,14 +257,25 @@ var app = new Vue({
                     carryOver = false;
                 }
             });
-            if (rerollDiceArr.join('') !== this.diceArr.join('')) {
+            sortedRerollDice = _.clone(rerollDiceArr).sort().join('');
+            if (sortedRerollDice !== this.diceArr.join('') && !_.includes(sortedPotentialRerolls, sortedRerollDice)) {
+                sortedPotentialRerolls.push(sortedRerollDice);
                 potentialRerolls.push({
                     rerollCombo: rerollComboArr.join(''),
-                    rerollDice: rerollDiceArr.join(''),
-                    highestPoints: this.getPointCombos(rerollDiceArr)[0].points
+                    rerollDice: sortedRerollDice,
+                    highestPoints: this.getPointCombos(_.map(sortedRerollDice.split(''), function(val) {
+                        return parseInt(val, 10);
+                    }))[0].points
                 });
             }
-            return this.getPotentialRerolls(rerollComboArr, rerollDiceArr, potentialRerolls);
+            this.rerollsSimulated += 1;
+            if (this.rerollsSimulated % 100) {
+                self.getPotentialRerolls(rerollComboArr, rerollDiceArr, potentialRerolls, sortedPotentialRerolls, returnFn);
+            } else {
+                setTimeout(function() {
+                    self.getPotentialRerolls(rerollComboArr, rerollDiceArr, potentialRerolls, sortedPotentialRerolls, returnFn);
+                });
+            }
         },
         getPointCombos: function(diceArr) {
             var pointCombos = [];

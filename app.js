@@ -104,14 +104,14 @@ var app = new Vue({
             if (this.rollsLeft) {
                 this.showResults = false;
                 this.noResultsMsg = 'Simulating re-rolls and comparing scores...';
-                rerollCombos = ['1', '2', '3', '4', '5', '12', '13', '14', '15', '23', '24', '25', '34', '35','45', '123', '124', '125', '134', '135', '145', '234', '235', '245', '345', '1234', '1235', '1245', '1345', '2345', '12345'];
+                rerollCombos = ['1', '2', '3', '4', '5', '12', '13', '14', '15', '23', '24', '25', '34', '35','45', '123', '124', '125', '134', '135', '145', '234', '235', '245', '345', '1234', '1235', '1245', '1345', '2345'];
                 _.each(rerollCombos, function(rerollCombo) {
                     self.getPotentialRerolls(_.map(rerollCombo.split(''), function(val) {
                         return parseInt(val, 10) - 1;
                     }), _.clone(self.diceArr), [], [], function(newPotentialsRerolls) {
                         potentialRerolls = potentialRerolls.concat(newPotentialsRerolls);
                         rerollCombosCompleted += 1;
-                        if (rerollCombosCompleted === 31) {
+                        if (rerollCombosCompleted === 30) {
                             continueMakingRecommendation();
                         }
                     });

@@ -1,12 +1,12 @@
 html,
 body {
-  background-color: #eee;
+  background-color: #fff;
   font-family: "Helvetica", "Arial", "Verdana", sans-serif;
   margin: 0;
   padding: 0;
 }
 
-#app {
+.app-container {
   max-width: 100%;
   overflow: hidden;
 }
@@ -15,6 +15,7 @@ body {
   background-color: #369;
   padding: 10px 0;
 }
+
 .header > h1 {
   color: #fff;
   font-size: 24px;

@@ -12,74 +12,36 @@
       <div class="header">
         <h1>Yhatzee Companion</h1>
       </div>
-      <label>Dice</label>
-      <input
-        type="text"
-        v-model="dice"
-        @keydown="showResults = false"
-        @keyup.enter="makeRecommendation"
-        maxlength="5"
-      />
-      <label>
-        <input
-          type="checkbox"
-          v-model="rollsLeft"
-          @change="showResults = false"
-        />
-        <span>I have rolls left</span>
-      </label>
-      <p>Combinations already used:</p>
-      <label v-for="pointCombo in pointCombos">
-        <input
-          type="checkbox"
-          v-model="pointCombo.used"
-          @change="showResults = false"
-        />
-        <span v-html="pointCombo.name"></span>
-      </label>
-      <button @click="makeRecommendation">Calculate Recommendation</button>
-      <button @click="newRoll">New Roll &amp; Rec</button>
-      <div v-show="!showResults">
-        <p v-html="noResultsMsg">Loading...</p>
-      </div>
-      <div v-show="rerollsSimulated > 0" style="display: none">
-        <p>
-          <strong>Re-Rolls Simulated</strong>: {{rerollsSimulated}} / 7676
-          ({{((rerollsSimulated/7676)*100).toFixed(2)}}%)
-        </p>
-      </div>
-      <div v-show="showResults" style="display: none">
-        <p><strong>Recommendation</strong>: {{recommendation}}</p>
-        <div class="row">
-          <div class="col">
-            <p>
-              <strong>Re-Roll Confidence</strong>:
-              {{weightedRerollComboRating}}%
-            </p>
-          </div>
-          <div class="col">
-            <button @click="followRecommendation">Follow Recommendation</button>
-          </div>
+      <div class="container">
+        <h2>Current roll:</h2>
+        <div class="dice">
+          <input type="text" placeholder="?" />
+          <input type="text" placeholder="?" />
+          <input type="text" placeholder="?" />
+          <input type="text" placeholder="?" />
+          <input type="text" placeholder="?" />
         </div>
-        <table class="table">
+        <h2>Combos already used:</h2>
+        <div class="used"></div>
+        <h2>Recommendation:</h2>
+        <p id="recommendation"></p>
+        <h2>Re-Roll confidence:</h2>
+        <p id="rerollConfidece"></p>
+        <h2>Your combos:</h2>
+        <table class="combos-table">
           <thead>
             <tr>
-              <th>Current Roll Combos</th>
+              <th></th>
               <th>Points</th>
               <th>Max</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-for="availablePointCombo in availablePointCombos">
-              <td>{{availablePointCombo.name}}</td>
-              <td>{{availablePointCombo.points}}</td>
-              <td>{{availablePointCombo.max}}</td>
-            </tr>
-          </tbody>
+          <tbody id="combos"></tbody>
         </table>
       </div>
     </main>
     <script src="companion.js"></script>
+    <script src="navigation.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

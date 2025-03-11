@@ -23,3 +23,55 @@ body {
   margin: 0;
   text-align: center;
 }
+
+.container {
+  margin: 0 auto;
+  padding: 16px 0;
+  text-align: center;
+  width: 352px;
+}
+
+.dice {
+  display: flex;
+  flex-direction: row;
+}
+
+.dice > input {
+  border-color: #369;
+  border-style: solid;
+  border-width: 6px;
+  color: #369;
+  font-size: 36px;
+  font-weight: bold;
+  height: 36px;
+  line-height: 36px;
+  padding: 8px 0;
+  text-align: center;
+  text-transform: uppercase;
+  width: 52px;
+}
+
+.dice > input:not(:last-child) {
+  margin-right: 8px;
+}
+
+.dice > input:placeholder-shown {
+  border-color: #ddd;
+}
+
+.dice > input::placeholder {
+  color: #ddd;
+}
+
+.dice > input:focus-visible {
+  border-bottom-color: #333;
+  border-left-color: #ddd;
+  border-right-color: #ddd;
+  border-top-color: #ddd;
+  color: #333;
+  outline: none;
+}
+
+.dice > input::selection {
+  background: none;
+}

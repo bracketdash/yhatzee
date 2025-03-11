@@ -1,3 +1,84 @@
+const dice = Array.from(document.querySelectorAll(".dice > input"));
+const used = document.querySelector(".used");
+
+function checkBoard() {
+  // TODO
+}
+
+function generateUsedOptions() {
+  used.innerHTML = pointCombos
+    .map(
+      ({ id, name }) =>
+        `<label><input type="checkbox" id="combo-used-${id}" /> ${name}</label>`
+    )
+    .join("");
+}
+
+function handleKeydown(event) {
+  const input = event.target;
+  const currentIndex = dice.indexOf(input);
+  const isLastInput = currentIndex === 4;
+  const isFirstInput = currentIndex === 0;
+  const isEmpty = input.value === "";
+  const controlKeys = [
+    "ArrowRight",
+    "ArrowLeft",
+    "Backspace",
+    "Delete",
+    "Enter",
+  ];
+  if (controlKeys.includes(event.key) || event.key.length === 1) {
+    event.preventDefault();
+  }
+  const asNumber = parseInt(event.key);
+  if (!isNaN(asNumber) && asNumber > 0 && asNumber < 7) {
+    input.value = event.key;
+    if (!isLastInput) {
+      dice[currentIndex + 1].focus();
+    }
+    checkBoard();
+  } else if (controlKeys.includes(event.key)) {
+    switch (event.key) {
+      case "ArrowRight":
+        if (!isLastInput) {
+          dice[currentIndex + 1].focus();
+        }
+        break;
+      case "ArrowLeft":
+        if (!isFirstInput) {
+          dice[currentIndex - 1].focus();
+        }
+        break;
+      case "Backspace":
+        if (isEmpty) {
+          if (!isFirstInput) {
+            const prevInput = dice[currentIndex - 1];
+            prevInput.value = "";
+            dice[currentIndex - 1].focus();
+          }
+        } else {
+          input.value = "";
+        }
+        checkBoard();
+        break;
+      case "Delete":
+        input.value = "";
+        if (!isLastInput) {
+          dice[currentIndex + 1].focus();
+        }
+        checkBoard();
+        break;
+    }
+  }
+}
+
+dice.forEach((input) => {
+  input.addEventListener("keydown", handleKeydown);
+});
+
+generateUsedOptions();
+
+/*
 var app = new Vue({
   el: "#app",
   data: {
@@ -270,48 +351,6 @@ var app = new Vue({
         self.noResultsMsg = "Ready...";
       }
     },
-    newRoll: function () {
-      var newDice = "";
-      _.times(5, function () {
-        newDice += _.random(1, 6);
-      });
-      this.dice = newDice;
-      this.makeRecommendation();
-    },
-    followRecommendation: function () {
-      var self = this;
-      var newDiceArr = _.map(this.dice.split(""), function (val) {
-        return parseInt(val, 10);
-      });
-      var rerollIndexObjs = [];
-      if (this.recommendReroll) {
-        _.each(this.recommendedRerollCombo, function (rerollDie) {
-          var die = self.diceArr[parseInt(rerollDie, 10)];
-          var rerollIndex;
-          var startingIndex;
-          if (rerollIndexObjs.length) {
-            startingIndex = _.find(rerollIndexObjs, { die: die });
-            if (startingIndex) {
-              rerollIndex = _.indexOf(newDiceArr, die, startingIndex.index);
-            } else {
-              rerollIndex = _.indexOf(newDiceArr, die);
-            }
-          } else {
-            rerollIndex = _.indexOf(newDiceArr, die);
-          }
-          rerollIndexObjs.push({
-            die: die,
-            index: rerollIndex,
-          });
-          newDiceArr[rerollIndex] = _.random(1, 6);
-        });
-        this.dice = newDiceArr.join("");
-        this.makeRecommendation();
-      } else {
-        _.find(this.pointCombos, { id: this.recommendedComboId }).used = true;
-        this.showResults = false;
-      }
-    },
     getPotentialRerolls: function (
       rerollComboArr,
       rerollDiceArr,
@@ -539,3 +578,4 @@ var app = new Vue({
     },
   },
 });
+*/

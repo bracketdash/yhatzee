@@ -24,9 +24,20 @@ body {
   text-align: center;
 }
 
+h2 {
+  border-bottom: 1px solid #ddd;
+  color: #777;
+  font-size: 18px;
+  font-style: italic;
+  font-weight: normal;
+  padding-bottom: 3px;
+  padding-left: 6px;
+  text-align: left;
+}
+
 .container {
   margin: 0 auto;
-  padding: 16px 0;
+  padding: 0;
   text-align: center;
   width: 352px;
 }
@@ -74,4 +85,97 @@ body {
 
 .dice > input::selection {
   background: none;
+}
+
+.used > label {
+  border-radius: 14px;
+  border: 1px solid #0006;
+  color: #fff;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 14px;
+  font-weight: bold;
+  height: 28px;
+  line-height: 28px;
+  margin-bottom: 8px;
+  margin-right: 8px;
+  padding: 0 10px;
+}
+
+.used > label:not(:has(input:checked)) {
+  background-color: #538d4e;
+}
+
+.used > label:not(:has(input:checked)):hover {
+  background-color: #695;
+}
+
+.used > label:not(:has(input:checked)):active {
+  background-color: #473;
+}
+
+.used > label:has(input:checked) {
+  background-color: #900;
+}
+
+.used > label:has(input:checked):hover {
+  background-color: #a00;
+}
+
+.used > label:has(input:checked):active {
+  background-color: #800;
+}
+
+.used > label > input {
+  display: none;
+}
+
+.suggestion {
+  color: #333;
+  font-weight: bold;
+  text-align: left;
+}
+
+.suggestion.no-suggestion {
+  color: #777;
+  font-style: italic;
+  font-weight: normal;
+}
+
+.your-combos {
+  padding-top: 12px;
+}
+
+.your-combos.hidden {
+  display: none;
+}
+
+.your-combos table {
+  width: 100%;
+}
+
+.your-combos th:first-child,
+.your-combos td:first-child {
+  padding-left: 6px;
+  text-align: left;
+}
+
+.your-combos th {
+  border-bottom: 1px solid #ccc;
+  color: #777;
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.your-combos tbody {
+  padding-top: 8px;
+}
+
+.your-combos tr:not(:last-of-type) td {
+  border-bottom: 1px solid #ddd;
+}
+
+.your-combos td {
+  color: #333;
+  line-height: 28px;
 }

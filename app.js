@@ -24,7 +24,7 @@ function checkBoard() {
   });
   suggestion.classList.remove("no-suggestion");
   yourCombos.classList.remove("hidden");
-  const { combos, message } = getSuggestion(diceArr.sort(), usedCombos);
+  const { combos, message } = getSuggestion(diceArr, usedCombos);
   yourCombos.querySelector("tbody").innerHTML = combos
     .map(
       ({ name, points, max }) =>

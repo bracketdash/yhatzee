@@ -136,9 +136,9 @@ const pointCombos = [
 ];
 
 function getCombos(diceArr, unusedCombos) {
-  const combos = unusedCombos.map(({ name, max, getPoints }, index) => ({
+  const combos = unusedCombos.map(({ name, max, getPoints }) => ({
     name,
-    points: getPoints(diceArr),
+    points: getPoints([...diceArr].sort()),
     max,
   }));
   return combos
@@ -191,72 +191,55 @@ function getSuggestion(diceArr, usedCombos) {
   rerollOptions.forEach((rerollOption) => {
     const rerollOptionLength = rerollOption.length;
     const rerollOptionOutcomes = [];
-    dieValues
-      .filter((value) => value !== diceArr[rerollOption[0]])
-      .forEach((otherValueA) => {
-        if (rerollOptionLength > 1) {
-          dieValues
-            .filter((value) => value !== diceArr[rerollOption[1]])
-            .forEach((otherValueB) => {
-              if (rerollOptionLength > 2) {
-                dieValues
-                  .filter((value) => value !== diceArr[rerollOption[2]])
-                  .forEach((otherValueC) => {
-                    if (rerollOptionLength > 3) {
-                      dieValues
-                        .filter((value) => value !== diceArr[rerollOption[3]])
-                        .forEach((otherValueD) => {
-                          const newDiceArr = [...diceArr];
-                          newDiceArr.splice(rerollOption[0], 1, otherValueA);
-                          newDiceArr.splice(rerollOption[1], 1, otherValueB);
-                          newDiceArr.splice(rerollOption[2], 1, otherValueC);
-                          newDiceArr.splice(rerollOption[3], 1, otherValueD);
-                          const rerollCombos = getCombos(
-                            newDiceArr,
-                            unusedCombos
-                          );
-                          rerollOptionOutcomes.push(
-                            rerollCombos[0].points > currenHighScore
-                          );
-                        });
-                    } else {
-                      const newDiceArr = [...diceArr];
-                      newDiceArr.splice(rerollOption[0], 1, otherValueA);
-                      newDiceArr.splice(rerollOption[1], 1, otherValueB);
-                      newDiceArr.splice(rerollOption[2], 1, otherValueC);
-                      const rerollCombos = getCombos(newDiceArr, unusedCombos);
-                      rerollOptionOutcomes.push(
-                        rerollCombos[0].points > currenHighScore
-                      );
-                    }
-                  });
+    dieValues.forEach((otherValueA) => {
+      if (rerollOptionLength > 1) {
+        dieValues.forEach((otherValueB) => {
+          if (rerollOptionLength > 2) {
+            dieValues.forEach((otherValueC) => {
+              if (rerollOptionLength > 3) {
+                dieValues.forEach((otherValueD) => {
+                  const newDiceArr = [...diceArr];
+                  newDiceArr.splice(rerollOption[0], 1, otherValueA);
+                  newDiceArr.splice(rerollOption[1], 1, otherValueB);
+                  newDiceArr.splice(rerollOption[2], 1, otherValueC);
+                  newDiceArr.splice(rerollOption[3], 1, otherValueD);
+                  const rerollCombos = getCombos(newDiceArr, unusedCombos);
+                  rerollOptionOutcomes.push(
+                    rerollCombos[0].points > currenHighScore
+                  );
+                });
               } else {
                 const newDiceArr = [...diceArr];
                 newDiceArr.splice(rerollOption[0], 1, otherValueA);
                 newDiceArr.splice(rerollOption[1], 1, otherValueB);
+                newDiceArr.splice(rerollOption[2], 1, otherValueC);
                 const rerollCombos = getCombos(newDiceArr, unusedCombos);
                 rerollOptionOutcomes.push(
                   rerollCombos[0].points > currenHighScore
                 );
               }
             });
-        } else {
-          const newDiceArr = [...diceArr];
-          newDiceArr.splice(rerollOption[0], 1, otherValueA);
-          const rerollCombos = getCombos(newDiceArr, unusedCombos);
-          rerollOptionOutcomes.push(rerollCombos[0].points > currenHighScore);
-        }
-      });
+          } else {
+            const newDiceArr = [...diceArr];
+            newDiceArr.splice(rerollOption[0], 1, otherValueA);
+            newDiceArr.splice(rerollOption[1], 1, otherValueB);
+            const rerollCombos = getCombos(newDiceArr, unusedCombos);
+            rerollOptionOutcomes.push(rerollCombos[0].points > currenHighScore);
+          }
+        });
+      } else {
+        const newDiceArr = [...diceArr];
+        newDiceArr.splice(rerollOption[0], 1, otherValueA);
+        const rerollCombos = getCombos(newDiceArr, unusedCombos);
+        rerollOptionOutcomes.push(rerollCombos[0].points > currenHighScore);
+      }
+    });
     const chances =
-      rerollOptionOutcomes.filter((outcome) => !outcome).length /
+      rerollOptionOutcomes.filter((outcome) => outcome).length /
       rerollOptionOutcomes.length;
     optionChanceMap.push([chances, rerollOption]);
   });
   optionChanceMap.sort((a, b) => b[0] - a[0]);
-
-  // DEBUGGING
-  console.log(optionChanceMap);
-
   let message = "";
   if (optionChanceMap[0][0] > 0.5) {
     const nthMap = ["first", "second", "third", "fourth", "fifth"];
@@ -265,7 +248,10 @@ function getSuggestion(diceArr, usedCombos) {
       if (index === 0) {
         whichDice += nthMap[whichDie];
       } else if (index === optionChanceMap[0][1].length - 1) {
-        whichDice += `, and ${nthMap[whichDie]}`;
+        if (optionChanceMap[0][1].length > 2) {
+          whichDice += ",";
+        }
+        whichDice += ` and ${nthMap[whichDie]}`;
       } else {
         whichDice += `, ${nthMap[whichDie]}`;
       }

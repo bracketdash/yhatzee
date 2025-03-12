@@ -24,15 +24,14 @@ function checkBoard() {
   });
   suggestion.classList.remove("no-suggestion");
   yourCombos.classList.remove("hidden");
-  getSuggestion(diceArr.sort(), usedCombos, (message, combos) => {
-    suggestion.innerHTML = message;
-    yourCombos.querySelector("tbody").innerHTML = combos
-      .map(
-        ({ name, points, max }) =>
-          `<tr><td>${name}</td><td>${points}</td><td>${max}</td></tr>`
-      )
-      .join("");
-  });
+  const { message, combos } = getSuggestion(diceArr.sort(), usedCombos);
+  suggestion.innerHTML = message;
+  yourCombos.querySelector("tbody").innerHTML = combos
+    .map(
+      ({ name, points, max }) =>
+        `<tr><td>${name}</td><td>${points}</td><td>${max}</td></tr>`
+    )
+    .join("");
 }
 
 function generateUsedOptions() {

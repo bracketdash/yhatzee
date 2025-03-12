@@ -146,7 +146,7 @@ function getCombos(diceArr, unusedCombos) {
     .sort((a, b) => b.points - a.points);
 }
 
-const rerollCombos = [
+const rerollOptions = [
   [0],
   [1],
   [2],
@@ -179,175 +179,43 @@ const rerollCombos = [
   [1, 2, 3, 4],
 ];
 
-const maxLengthMap = [5, 20, 55, 125, 251];
+const dieValues = [1, 2, 3, 4, 5, 6];
 
-function getPotentialRerolls(
-  rerollComboArr,
-  diceArr,
-  callback,
-  potentialRerolls = [],
-  sortedPotentialRerolls = []
-) {
-  const newDiceArr = [...diceArr];
-  if (
-    sortedPotentialRerolls.length === maxLengthMap[rerollComboArr.length - 1]
-  ) {
-    callback(potentialRerolls);
-    return;
-  }
-  let carryOver = false;
-
-  // TODO: finish refactoring
-  _.each(rerollComboArr, function (rerollDie, rerollIndex) {
-    if (rerollIndex && !carryOver) {
-      return false;
-    }
-    if (diceArr[rerollDie] === 6) {
-      newDiceArr[rerollDie] = 1;
-      carryOver = true;
-    } else {
-      newDiceArr[rerollDie] += 1;
-      carryOver = false;
-    }
-  });
-  const sortedRerollDice = _.clone(newDiceArr).sort().join("");
-  const newSortedPotentialRerolls = [...sortedPotentialRerolls];
-  if (
-    sortedRerollDice !== this.diceArr.join("") &&
-    !_.includes(sortedPotentialRerolls, sortedRerollDice)
-  ) {
-    newSortedPotentialRerolls.push(sortedRerollDice);
-    potentialRerolls.push({
-      rerollCombo: rerollComboArr.join(""),
-      rerollDice: sortedRerollDice,
-      highestPoints: this.getPointCombos(
-        _.map(sortedRerollDice.split(""), function (val) {
-          return parseInt(val, 10);
-        })
-      )[0].points,
-    });
-  }
-  this.rerollsSimulated += 1;
-  if (this.rerollsSimulated % 100) {
-    getPotentialRerolls(
-      rerollComboArr,
-      newDiceArr,
-      callback,
-      potentialRerolls,
-      newSortedPotentialRerolls
-    );
-  } else {
-    setTimeout(function () {
-      getPotentialRerolls(
-        rerollComboArr,
-        newDiceArr,
-        callback,
-        potentialRerolls,
-        newSortedPotentialRerolls
-      );
-    });
-  }
-}
-
-function getSuggestion(diceArr, usedCombos, callback) {
+function getSuggestion(diceArr, usedCombos) {
   const unusedCombos = pointCombos.filter(
     (_, index) => !usedCombos.includes(index)
   );
   const combos = getCombos(diceArr, unusedCombos);
-  callback("Thinking...", combos);
-  let potentialRerolls = [];
-  let rerollCombosCompleted = 0;
-  rerollCombos.forEach((rerollCombo) => {
-    getPotentialRerolls(rerollCombo, diceArr, (newPotentialsRerolls) => {
-      potentialRerolls = [potentialRerolls, ...newPotentialsRerolls];
-      rerollCombosCompleted++;
-      if (rerollCombosCompleted === rerollCombos.length) {
-        continueMakingRecommendation();
-      }
-    });
-  });
-
-  // TODO: finish refactoring
-  var rerollComboGroups = {};
-  var rerollComboGroupsArr = [];
-  var highestCurrentPoints = combos[0].points;
-  function continueMakingRecommendation() {
-    self.rerollsSimulated = 0;
-    _.each(potentialRerolls, function (potentialReroll) {
-      if (!rerollComboGroups["r" + potentialReroll.rerollCombo]) {
-        rerollComboGroups["r" + potentialReroll.rerollCombo] = {
-          above: 0,
-          equal: 0,
-          rolls: [],
-          total: 0,
-          totalPoints: 0,
-        };
-      }
-      if (potentialReroll.highestPoints > highestCurrentPoints) {
-        rerollComboGroups["r" + potentialReroll.rerollCombo].above += 1;
-      } else if (potentialReroll.highestPoints === highestCurrentPoints) {
-        rerollComboGroups["r" + potentialReroll.rerollCombo].equal += 1;
-      }
-      rerollComboGroups["r" + potentialReroll.rerollCombo].totalPoints +=
-        potentialReroll.highestPoints;
-      rerollComboGroups["r" + potentialReroll.rerollCombo].rolls.push(
-        potentialReroll
-      );
-      rerollComboGroups["r" + potentialReroll.rerollCombo].total += 1;
-    });
-    _.each(rerollComboGroups, function (rerollComboGroup, rerollCombo) {
-      rerollComboGroup.rerollCombo = rerollCombo.substring(1);
-      rerollComboGroup.rating =
-        (rerollComboGroup.above /
-          (rerollComboGroup.total - rerollComboGroup.equal)) *
-        100;
-      if (_.isNaN(rerollComboGroup.rating)) {
-        rerollComboGroup.rating = 0;
-      }
-      rerollComboGroup.average =
-        rerollComboGroup.totalPoints / rerollComboGroup.total;
-      rerollComboGroupsArr.push(rerollComboGroup);
-    });
-    rerollComboGroupsArr = _.sortBy(rerollComboGroupsArr, [
-      "rating",
-      "average",
-    ]).reverse();
-    if (rerollComboGroupsArr.length && rerollComboGroupsArr[0].rating > 50) {
-      self.recommendation = "Re-roll ";
-      if (rerollComboGroupsArr[0].rerollCombo.length === 5) {
-        self.recommendation += "EVERYTHING";
-      } else {
-        self.recommendation += "the ";
-        _.each(
-          rerollComboGroupsArr[0].rerollCombo.split(""),
-          function (rerollDie, rerollIndex) {
-            if (rerollIndex) {
-              if (
-                rerollIndex ===
-                rerollComboGroupsArr[0].rerollCombo.length - 1
-              ) {
-                if (rerollComboGroupsArr[0].rerollCombo.length > 2) {
-                  self.recommendation += ",";
-                }
-                self.recommendation += " and ";
+  rerollOptions.forEach((rerollOption) => {
+    const rerollOptionLength = rerollOption.length;
+    dieValues
+      .filter((value) => value !== diceArr[rerollOption[0]])
+      .forEach((otherValueA) => {
+        if (rerollOptionLength > 1) {
+          dieValues
+            .filter((value) => value !== diceArr[rerollOption[1]])
+            .forEach((otherValueB) => {
+              if (rerollOptionLength > 2) {
+                dieValues
+                  .filter((value) => value !== diceArr[rerollOption[1]])
+                  .forEach((otherValueC) => {
+                    if (rerollOptionLength > 3) {
+                      dieValues
+                        .filter((value) => value !== diceArr[rerollOption[1]])
+                        .forEach((otherValueD) => {
+                          // use otherValueA, otherValueB, otherValueC, and otherValueD
+                        });
+                    } else {
+                      // just use otherValueA, otherValueB, and otherValueC
+                    }
+                  });
               } else {
-                self.recommendation += ", ";
+                // just use otherValueA and otherValueB
               }
-            }
-            self.recommendation += self.diceArr[parseInt(rerollDie, 10)];
-          }
-        );
-      }
-      self.recommendation += ".";
-      self.recommendReroll = true;
-      self.recommendedRerollCombo = rerollComboGroupsArr[0].rerollCombo;
-    } else {
-      self.recommendation =
-        combos[0].name + " for " + highestCurrentPoints + " points.";
-      self.recommendReroll = false;
-    }
-    self.weightedRerollComboRating = rerollComboGroupsArr[0].rating.toFixed(1);
-    self.showResults = true;
-    self.noResultsMsg = "Ready...";
-  }
+            });
+        } else {
+          // TODO: replace diceArr[x] with otherValueA and record the highest-point combo we can get
+        }
+      });
+  });
 }

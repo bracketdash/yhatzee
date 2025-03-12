@@ -186,8 +186,11 @@ function getSuggestion(diceArr, usedCombos) {
     (_, index) => !usedCombos.includes(index)
   );
   const combos = getCombos(diceArr, unusedCombos);
+  const currenHighScore = combos[0].points;
+  const optionChanceMap = [];
   rerollOptions.forEach((rerollOption) => {
     const rerollOptionLength = rerollOption.length;
+    const rerollOptionOutcomes = [];
     dieValues
       .filter((value) => value !== diceArr[rerollOption[0]])
       .forEach((otherValueA) => {
@@ -197,25 +200,83 @@ function getSuggestion(diceArr, usedCombos) {
             .forEach((otherValueB) => {
               if (rerollOptionLength > 2) {
                 dieValues
-                  .filter((value) => value !== diceArr[rerollOption[1]])
+                  .filter((value) => value !== diceArr[rerollOption[2]])
                   .forEach((otherValueC) => {
                     if (rerollOptionLength > 3) {
                       dieValues
-                        .filter((value) => value !== diceArr[rerollOption[1]])
+                        .filter((value) => value !== diceArr[rerollOption[3]])
                         .forEach((otherValueD) => {
-                          // use otherValueA, otherValueB, otherValueC, and otherValueD
+                          const newDiceArr = [...diceArr];
+                          newDiceArr.splice(rerollOption[0], 1, otherValueA);
+                          newDiceArr.splice(rerollOption[1], 1, otherValueB);
+                          newDiceArr.splice(rerollOption[2], 1, otherValueC);
+                          newDiceArr.splice(rerollOption[3], 1, otherValueD);
+                          const rerollCombos = getCombos(
+                            newDiceArr,
+                            unusedCombos
+                          );
+                          rerollOptionOutcomes.push(
+                            rerollCombos[0].points > currenHighScore
+                          );
                         });
                     } else {
-                      // just use otherValueA, otherValueB, and otherValueC
+                      const newDiceArr = [...diceArr];
+                      newDiceArr.splice(rerollOption[0], 1, otherValueA);
+                      newDiceArr.splice(rerollOption[1], 1, otherValueB);
+                      newDiceArr.splice(rerollOption[2], 1, otherValueC);
+                      const rerollCombos = getCombos(newDiceArr, unusedCombos);
+                      rerollOptionOutcomes.push(
+                        rerollCombos[0].points > currenHighScore
+                      );
                     }
                   });
               } else {
-                // just use otherValueA and otherValueB
+                const newDiceArr = [...diceArr];
+                newDiceArr.splice(rerollOption[0], 1, otherValueA);
+                newDiceArr.splice(rerollOption[1], 1, otherValueB);
+                const rerollCombos = getCombos(newDiceArr, unusedCombos);
+                rerollOptionOutcomes.push(
+                  rerollCombos[0].points > currenHighScore
+                );
               }
             });
         } else {
-          // TODO: replace diceArr[x] with otherValueA and record the highest-point combo we can get
+          const newDiceArr = [...diceArr];
+          newDiceArr.splice(rerollOption[0], 1, otherValueA);
+          const rerollCombos = getCombos(newDiceArr, unusedCombos);
+          rerollOptionOutcomes.push(rerollCombos[0].points > currenHighScore);
         }
       });
+    const chances =
+      rerollOptionOutcomes.filter((outcome) => !outcome).length /
+      rerollOptionOutcomes.length;
+    optionChanceMap.push([chances, rerollOption]);
   });
+  optionChanceMap.sort((a, b) => b[0] - a[0]);
+
+  // DEBUGGING
+  console.log(optionChanceMap);
+
+  let message = "";
+  if (optionChanceMap[0][0] > 0.5) {
+    const nthMap = ["first", "second", "third", "fourth", "fifth"];
+    let whichDice = "";
+    optionChanceMap[0][1].forEach((whichDie, index) => {
+      if (index === 0) {
+        whichDice += nthMap[whichDie];
+      } else if (index === optionChanceMap[0][1].length - 1) {
+        whichDice += `, and ${nthMap[whichDie]}`;
+      } else {
+        whichDice += `, ${nthMap[whichDie]}`;
+      }
+    });
+    message = `Reroll your ${whichDice} di${
+      optionChanceMap[0][1].length > 1 ? "c" : ""
+    }e for a ${(optionChanceMap[0][0] * 100).toFixed(
+      2
+    )}% chance at a higher score.`;
+  } else {
+    message = `Take the ${combos[0].name} for ${combos[0].points} points.`;
+  }
+  return { combos, message };
 }
